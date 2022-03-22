@@ -1,0 +1,381 @@
+version: '3'
+
+volumes:
+  mysql-data:
+  redis-data:
+
+services:
+  elk:
+    image: elk
+    container_name: elk
+    environment:
+      - ES_HEAP_SIZE=512m
+    ports:
+      - 5601:5601
+      - 9200:9200
+      - 5044:5044
+
+  storage:
+    image: openzipkin/zipkin-mysql
+    container_name: storage
+    # Uncomment to expose the storage port for testing
+    # ports:
+    #   - 3306:3306
+
+  # The zipkin process services the UI, and also exposes a POST endpoint that
+  # instrumentation can send trace data to. Scribe is disabled by default.
+  zipkin:
+    image: openzipkin/zipkin
+    container_name: zipkin
+    # Environment settings are defined here https://github.com/openzipkin/zipkin/blob/master/zipkin-server/README.md#environment-variables
+    environment:
+      - STORAGE_TYPE=mysql
+      # Point the zipkin at the storage backend
+      - MYSQL_HOST=storage
+      - MYSQL_USER=zipkin
+      - MYSQL_PASS=zipkin
+      # Uncomment to enable scribe
+      # - SCRIBE_ENABLED=true
+      # Uncomment to enable self-tracing
+      # - SELF_TRACING_ENABLED=true
+      # Uncomment to enable debug logging
+      # - JAVA_OPTS=-Dlogging.level.zipkin2=DEBUG
+    ports:
+      # Port used for the Zipkin UI and HTTP Api
+      - 9411:9411
+      # Uncomment if you set SCRIBE_ENABLED=true
+      # - 9410:9410
+    depends_on:
+      - storage
+
+  # Adds a cron to process spans since midnight every hour, and all spans each day
+  # This data is served by http://192.168.99.100:8080/dependency
+  #
+  # For more details, see https://github.com/openzipkin/docker-zipkin-dependencies
+  dependencies:
+    image: openzipkin/zipkin-dependencies
+    container_name: dependencies
+    entrypoint: crond -f
+    environment:
+      - STORAGE_TYPE=mysql
+      - MYSQL_HOST=mysql
+      # Add the baked-in username and password for the zipkin-mysql image
+      - MYSQL_USER=zipkin
+      - MYSQL_PASS=zipkin
+      # Uncomment to see dependency processing logs
+      # - ZIPKIN_LOG_LEVEL=DEBUG
+      # Uncomment to adjust memory used by the dependencies job
+      # - JAVA_OPTS=-verbose:gc -Xms1G -Xmx1G
+    depends_on:
+      - storage
+
+  mysql:
+    container_name: mysql
+    image: mysql:8.0.20
+    restart: always
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./mysql/init:/docker-entrypoint-initdb.d
+    environment:
+      MYSQL_ROOT_PASSWORD: local
+    ports:
+      - 3307:3306
+
+  redis:
+    container_name: redis
+    image: bitnami/redis:latest
+    environment:
+      - REDIS_PASSWORD=password123
+    volumes:
+      - redis-data:/bitnami
+    ports:
+      - 6379:6379
+
+  discovery:
+    container_name: discovery
+    image: justyoga-discovery:0.0.1-SNAPSHOT
+    environment:
+      - JAVA_OPTS=
+        -Xmx300m
+    ports:
+      - 8761:8761
+
+  config:
+    container_name: config
+    image: justyoga-config:0.0.1-SNAPSHOT
+    volumes:
+      - ./config-data:/var/config-data
+    environment:
+      - JAVA_OPTS=
+        -Xmx300m
+        -DEUREKA_SERVER=http://discovery:8761/eureka
+        -Dspring.cloud.config.server.native.searchLocations=/var/config-data
+    ports:
+      - 8888:8888
+
+  auth:
+    container_name: auth
+    image: justyoga-auth:0.0.1-SNAPSHOT
+    environment:
+      - JAVA_OPTS=
+        -Xmx300m
+        -DEUREKA_SERVER=http://discovery:8761/eureka
+        -Dspring.profiles.active=docker
+        -DCONFIG_SERVER=http://config:8888
+        -DZIPKIN_SERVER=http://zipkin:9411/
+        -DFIREBASE_FILE_NAME=qa-firebase.json
+    depends_on:
+      - user
+    ports:
+      - 8881:8881
+
+  gateway:
+    container_name: gateway
+    image: justyoga-gateway:0.0.1-SNAPSHOT
+    environment:
+      - JAVA_OPTS=
+        -Xmx300m
+        -DEUREKA_SERVER=http://discovery:8761/eureka
+        -Dspring.profiles.active=docker
+        -DCONFIG_SERVER=http://config:8888
+        -DZIPKIN_SERVER=http://zipkin:9411/
+        -DREDIS_SERVER=redis
+        -DREDIS_PASSWORD=password123
+        -DSHOW_RATE_HEADER=true
+    depends_on:
+      - config
+      - auth
+      - discovery
+      - redis
+    ports:
+      - 8011:8011
+
+  location:
+    container_name: location
+    image: justyoga-location:0.0.1-SNAPSHOT
+    environment:
+      - JAVA_OPTS=
+        -Xmx300m
+        -DEUREKA_SERVER=http://discovery:8761/eureka
+        -DCONFIG_SERVER=http://config:8888
+        -DZIPKIN_SERVER=http://zipkin:9411/
+        -Dspring.profiles.active=docker
+    depends_on:
+      - gateway
+    ports:
+      - 8889:8889
+
+  place:
+    container_name: place
+    image: justyoga-place:0.0.1-SNAPSHOT
+    environment:
+      - JAVA_OPTS=
+        -Xmx300m
+        -DEUREKA_SERVER=http://discovery:8761/eureka
+        -Dspring.profiles.active=docker
+        -DCONFIG_SERVER=http://config:8888
+        -DZIPKIN_SERVER=http://zipkin:9411/
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/place?allowPublicKeyRetrieval=true&useSSL=false&useUnicode=yes&characterEncoding=UTF-8
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=local
+    depends_on:
+      - mysql
+      - gateway
+    ports:
+      - 8882:8882
+
+  user:
+    container_name: user
+    image: justyoga-user:0.0.1-SNAPSHOT
+    environment:
+      - JAVA_OPTS=
+        -Xmx300m
+        -DEUREKA_SERVER=http://discovery:8761/eureka
+        -Dspring.profiles.active=docker
+        -DCONFIG_SERVER=http://config:8888
+        -DZIPKIN_SERVER=http://zipkin:9411/
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/user?allowPublicKeyRetrieval=true&useSSL=false&useUnicode=yes&characterEncoding=UTF-8
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=local
+    depends_on:
+      - mysql
+    ports:
+      - 8883:8883
+
+  profile:
+    container_name: profile
+    image: justyoga-profile:0.0.1-SNAPSHOT
+    environment:
+      - JAVA_OPTS=
+        -Xmx200m
+        -DEUREKA_SERVER=http://discovery:8761/eureka
+        -Dspring.profiles.active=docker
+        -DCONFIG_SERVER=http://config:8888
+        -DZIPKIN_SERVER=http://zipkin:9411/
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/profile?allowPublicKeyRetrieval=true&useSSL=false&useUnicode=yes&characterEncoding=UTF-8
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=local
+    depends_on:
+      - mysql
+      - gateway
+    ports:
+      - 8884:8884
+
+  library:
+    container_name: library
+    image: justyoga-library:0.0.1-SNAPSHOT
+    environment:
+      - JAVA_OPTS=
+        -Xmx300m
+        -DEUREKA_SERVER=http://discovery:8761/eureka
+        -Dspring.profiles.active=docker
+        -DCONFIG_SERVER=http://config:8888
+        -DZIPKIN_SERVER=http://zipkin:9411/
+        -DAWS_ACCESS_KEY=AWS_ACCESS_KEY
+        -DAWS_SECRET_ACCESS_KEY=AWS_SECRET_ACCESS_KEY
+        -DAWS_BUCKET=app-data-qa
+        -DAWS_PUBLIC_BUCKET=qa-content-data
+        -DAWS_REGION=ap-south-1
+    depends_on:
+      - gateway
+    ports:
+      - 8885:8885
+
+  review:
+    container_name: review
+    image: justyoga-review:0.0.1-SNAPSHOT
+    environment:
+      - JAVA_OPTS=
+        -Xmx300m
+        -DEUREKA_SERVER=http://discovery:8761/eureka
+        -Dspring.profiles.active=docker
+        -DCONFIG_SERVER=http://config:8888
+        -DZIPKIN_SERVER=http://zipkin:9411/
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/review?allowPublicKeyRetrieval=true&useSSL=false&useUnicode=yes&characterEncoding=UTF-8
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=local
+    depends_on:
+      - mysql
+      - gateway
+    ports:
+      - 8887:8887
+
+  blog:
+    container_name: blog
+    image: justyoga-blog:0.0.1-SNAPSHOT
+    environment:
+      - JAVA_OPTS=
+        -Xmx300m
+        -DEUREKA_SERVER=http://discovery:8761/eureka
+        -Dspring.profiles.active=docker
+        -DCONFIG_SERVER=http://config:8888
+        -DZIPKIN_SERVER=http://zipkin:9411/
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/blog?allowPublicKeyRetrieval=true&useSSL=false&useUnicode=yes&characterEncoding=UTF-8
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=local
+    depends_on:
+      - mysql
+      - gateway
+    ports:
+      - 8886:8886
+
+
+  search:
+    container_name: search
+    image: justyoga-search:0.0.1-SNAPSHOT
+    environment:
+      - JAVA_OPTS=
+        -Xmx300m
+        -DEUREKA_SERVER=http://discovery:8761/eureka
+        -Dspring.profiles.active=docker
+        -DCONFIG_SERVER=http://config:8888
+        -DZIPKIN_SERVER=http://zipkin:9411/
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/search?allowPublicKeyRetrieval=true&useSSL=false&useUnicode=yes&characterEncoding=UTF-8
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=local
+    depends_on:
+      - mysql
+      - gateway
+      - user
+      - profile
+      - review
+    ports:
+      - 8890:8890
+
+  collection:
+    container_name: collection
+    image: justyoga-collection:0.0.1-SNAPSHOT
+    environment:
+      - JAVA_OPTS=
+        -Xmx300m
+        -DEUREKA_SERVER=http://discovery:8761/eureka
+        -Dspring.profiles.active=docker
+        -DCONFIG_SERVER=http://config:8888
+        -DZIPKIN_SERVER=http://zipkin:9411/
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/collection?allowPublicKeyRetrieval=true&useSSL=false&useUnicode=yes&characterEncoding=UTF-8
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=local
+    depends_on:
+      - mysql
+      - gateway
+    ports:
+      - 8891:8891
+
+  bookmark:
+    container_name: bookmark
+    image: justyoga-bookmark:0.0.1-SNAPSHOT
+    environment:
+      - JAVA_OPTS=
+        -Xmx300m
+        -DEUREKA_SERVER=http://discovery:8761/eureka
+        -Dspring.profiles.active=docker
+        -DCONFIG_SERVER=http://config:8888
+        -DZIPKIN_SERVER=http://zipkin:9411/
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/bookmark?allowPublicKeyRetrieval=true&useSSL=false&useUnicode=yes&characterEncoding=UTF-8
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=local
+    depends_on:
+      - mysql
+      - gateway
+    ports:
+      - 8892:8892
+
+  just-yoga-ui:
+    container_name: just-yoga-ui
+    image: just-yoga-ui
+    ports:
+      - 3000:3000
+
+  #  nginx:
+  #    image: nginx:1.17-alpine
+  #    container_name: webserver
+  #    restart: unless-stopped
+  #    tty: true
+  #    ports:
+  #      - "80:80"
+  #      - "443:443"
+  #    volumes:
+  #      - ./:/var/www
+  #      - ./config/nginx/nginx.conf:/etc/nginx/nginx.conf
+  #      - /root/.acme.sh/amenu.ru:/etc/acme.sh/amenu.ru
+  #      - /etc/conf.ddhparam.pem:/etc/nginx/conf.ddhparam.pem
+  #    links:
+  #      - frontend-web
+  #    networks:
+  #      - app-network
+  #    depends_on:
+  #      - frontend-web
+
+  #Frontend
+  frontend-web:
+    build:
+      context: ../client-ui/
+      dockerfile: Dockerfile
+    container_name: frontend-web
+    restart: unless-stopped
+    ports:
+      - 3000:3000
+#    networks:
+#      - app-network
+
+

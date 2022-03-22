@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "credo-f7d83",
+  "private_key_id": "88d8ce00fe2750ca17eb86f35041d24324d263ab",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQC6dOIQ1HYn7GYT\nsFnPzUwRBKWEs0hYSVwSJvbMJ7uRXAttslJPowoxdJt2VIDSkLVijGkZXlu2uPLz\nEGOJynlByBUgh2kxVbmA63zZ0Zc8nvfnVe5WN6Wm3AIkfmIiSbGHTcxe3BX8CFB/\nawdbhyIpqlLl4i7Gk17VkF6/DuMXdRAgsHqy2hlVUwfBsDWSIFSeFppJF6nAzsNL\n3FCIlxV9spKXaW47sWjymLwxyWlc2lD5YdKw40fluf4++oN3GIgfE/Hk1pF9QDSd\nb7POfh0Wt2HPfQ65+lASdMldncmLUDPHGdxr9b6FTuI1NZC46HjcZtjjVrairrrR\n3OBWe86pAgMBAAECggEAFfACGB5TP4vAD9F4I6uhJ0Bvc/8/BAovj8AvWeJT3nyg\nqJmqNw30+VAhqWi0VnHpsWxZQj+YlVVJ2mDDgVcF8MAogjEEZqZSItGyGROgkmSW\nwMxatCCseAcbJm2LQMMAZO25nbCR0pss020FitaJpbLROZRk0f7NUd3AVATdoaj0\nIQym9J296cZehuxf9fy+UtQ7ppz/ajH01xR1NJjLloUfnv9dzUCjfdYYnzAi+LK9\n2Rk3cOMj+ZuMiuPfCIfDZBlTcwXqnSgDYWh0rBr33Vhi193MlHQ7Ge2H25QcRlC/\nAT+8rRRRewFmtMTvCpUYnBJXQLjeVQ3T3nY/OTBeXQKBgQDb/tWXvvRFM/8yGTV9\ndvwm5/IMOMbre+iLOS5OZQePgrKet/zEDY222ED60/RapOa8Sw/mJUthheQApQzZ\nBfb7gCzKMoIWKOFb+QjFWaMjnTm5QtjYxrzdFCnIfXTYHDfT26XNN9Yw90RjCotd\nwlNUpxu/uxZsbPIpvjxKUimmFQKBgQDY+N47NyN9NgKf6/7isKtNW3y6QjGu7rT/\njm7AipkalVMqLSFjt3uxjlEzHCc9YyAs+ftJR2ODpQy1TRbDGtM3Lx5IYQ00SV5f\nNt7/gLpn6eHq15ptPK1kDEH2o1I9sH/TJnNjusjF/jqlm2ikkw9QArKU2f5m4YsZ\nxQvgEG+fRQKBgAt1zP6oreTk/ohHk+fDSQNl1dAZLRObUtPd2LGwxaIONuvZvcsg\nwZ8iyM/INtR5/qMUbfGZQ8ICzYvTDUZI70LOvIaT9v7chlDaOkC9mKgESruB5fX0\n9GW35S1Si8GuRqI8sPhtzjSizOcz52qs8tZYFjP4tQRU8JCIHm/os865AoGAPW7Z\nnXKTPdSZEabEWHMlTZXlzucHIjy8Ss+NVD7p8rjs/zggCBffkfp1yz7hbWQvrAxr\ntefcqV2GJ59YHo3t1+YjcOLp1jAf5F2o7jcIkHuMV+4L73oKrhU6aBb+JjFfP+3X\nJhmw1z6QZGuISXDKGSFqZvMCMScTN4yvPBXrRPECgYB5MpWi1LbWMAPAywczjihc\n8wSSuyxm+r21Q81Eqx0Enk+qegCElcLGC60PbefooR+hFqmtorVZshmN35QvxYfM\ne9yk9vj6CD75wRoDy75vvfRsfaoWuxeV+UkZ01MH+UkBKWzX5FWUCYdDBslhxaM1\n3rEgPnE8yjQqpA7Cxdb70Q==\n-----END PRIVATE KEY-----\n",
+  "client_email": "justcredo-backend@credo-f7d83.iam.gserviceaccount.com",
+  "client_id": "110186354849122326705",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/justcredo-backend%40credo-f7d83.iam.gserviceaccount.com"
+}

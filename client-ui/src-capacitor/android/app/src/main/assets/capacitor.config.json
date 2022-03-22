@@ -1,0 +1,10 @@
+{
+  "appId": "fit.justyoga",
+  "appName": "justyoga",
+  "bundledWebRuntime": false,
+  "npmClient": "npm",
+  "webDir": "www",
+  "server": {
+    "url": "http://192.168.1.81:3000"
+  }
+}

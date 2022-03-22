@@ -1,0 +1,7 @@
+{
+  "appId": "fit.justyoga",
+  "appName": "justyoga",
+  "bundledWebRuntime": false,
+  "npmClient": "npm",
+  "webDir": "www"
+}

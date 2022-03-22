@@ -1,0 +1,53 @@
+{
+  "name": "client-ui",
+  "version": "0.0.1",
+  "description": "All about yoga",
+  "productName": "justyoga",
+  "cordovaId": "fit.justyoga",
+  "capacitorId": "",
+  "author": "Sanjay Kumar <sanjaykumarsingh9201@gmail.com>",
+  "private": true,
+  "scripts": {
+    "lint": "eslint --ext .js,.vue --ignore-path .gitignore ./",
+    "test": "echo \"No test specified\" && exit 0"
+  },
+  "dependencies": {
+    "@capacitor/core": "^2.1.2",
+    "@quasar/extras": "^1.0.0",
+    "@quasar/icongenie": "^2.2.0",
+    "@quasar/quasar-app-extension-qmediaplayer": "^1.0.24",
+    "axios": "^0.18.1",
+    "firebase": "^7.17.1",
+    "firebaseui": "^4.6.1",
+    "google-maps-api-loader": "^1.1.1",
+    "javascript-time-ago": "^2.0.13",
+    "quasar": "^1.0.0",
+    "reading-time": "^1.2.0",
+    "uuid": "^8.2.0",
+    "vue-clamp": "^0.3.0",
+    "vue-clipboard2": "^0.3.1",
+    "vue-i18n": "^8.0.0",
+    "vue-social-sharing": "^3.0.0-beta.11",
+    "vuejs-clipper": "^0.2.5",
+    "vuelidate": "^0.7.4"
+  },
+  "devDependencies": {
+    "@quasar/app": "^1.0.0",
+    "babel-eslint": "^10.0.1",
+    "eslint": "^6.8.0",
+    "eslint-config-prettier": "^6.9.0",
+    "eslint-loader": "^3.0.3",
+    "eslint-plugin-vue": "^6.1.2"
+  },
+  "engines": {
+    "node": ">= 10.18.1",
+    "npm": ">= 6.13.4",
+    "yarn": ">= 1.21.1"
+  },
+  "browserslist": [
+    "last 1 version, not dead, ie >= 11"
+  ],
+  "resolutions": {
+    "@babel/parser": "7.7.5"
+  }
+}
